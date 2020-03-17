@@ -1,14 +1,14 @@
 'use strict';
 
 var util = require('util'),
-    winston = require('winston'),
-    AWS = require('aws-sdk'),
-    cloudWatchIntegration = require('./lib/cloudwatch-integration'),
-    isEmpty = require('lodash.isempty'),
-    assign = require('lodash.assign'),
-    isError = require('lodash.iserror'),
-    stringify = require('./lib/utils').stringify,
-    debug = require('./lib/utils').debug;
+  winston = require('winston'),
+  AWS = require('aws-sdk'),
+  cloudWatchIntegration = require('./lib/cloudwatch-integration'),
+  isEmpty = require('lodash.isempty'),
+  assign = require('lodash.assign'),
+  isError = require('lodash.iserror'),
+  stringify = require('./lib/utils').stringify,
+  debug = require('./lib/utils').debug;
 
 
 var WinstonCloudWatch = function(options) {
@@ -17,13 +17,13 @@ var WinstonCloudWatch = function(options) {
   this.name = options.name || 'CloudWatch';
   this.logGroupName = options.logGroupName;
   this.retentionInDays = options.retentionInDays || 0;
-  this.logStreamName = options.logStreamName;
+  this.logStreamName = 'others';
 
   var awsAccessKeyId = options.awsAccessKeyId;
   var awsSecretKey = options.awsSecretKey;
   var awsRegion = options.awsRegion;
   var messageFormatter = options.messageFormatter ? options.messageFormatter : function(log) {
-    return [ log.level, log.message ].join(' - ')
+    return [log.level, log.message].join(' - ')
   };
   this.formatMessage = options.jsonMessage ? stringify : messageFormatter;
   this.proxyServer = options.proxyServer;
@@ -65,10 +65,10 @@ var WinstonCloudWatch = function(options) {
 
 util.inherits(WinstonCloudWatch, winston.Transport);
 
-WinstonCloudWatch.prototype.log = function (info, callback) {
+WinstonCloudWatch.prototype.log = function(info, callback) {
   debug('log (called by winston)', info);
 
-  if (!isEmpty(info.message) || isError(info.message)) { 
+  if (!isEmpty(info.message) || isError(info.message)) {
     this.add(info);
   }
 
@@ -90,6 +90,8 @@ WinstonCloudWatch.prototype.add = function(log) {
   debug('add log to queue', log);
 
   var self = this;
+
+  self.logStreamName = log.message
 
   if (!isEmpty(log.message) || isError(log.message)) {
     self.logEvents.push({
