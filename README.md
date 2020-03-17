@@ -73,103 +73,10 @@ var winston = require('winston'),
     WinstonCloudWatch = require('winston-cloudwatch');
 ```
 
-In ES6
-```js
-import winston from 'winston';
-import WinstonCloudWatch from 'winston-cloudwatch';
-```
-
 ```js
 winston.add(new WinstonCloudWatch({
   logGroupName: 'testing',
-  logStreamName: 'first'
 }));
 
-winston.error('1');
+winston.error('<StreamName>', <Json Log>);
 ```
-
-You can also specify a function for the `logGroupName` and `logStreamName` options. This is handy if you are using this module in a server, say with [express](https://github.com/bithavoc/express-winston), as it enables you to easily split streams across dates, for example. There is an example of this [here](https://github.com/lazywithclass/winston-cloudwatch/blob/master/examples/function-config.js).
-
-#### Logging to multiple streams
-
-You could also log to multiple streams with / without different log levels, have a look at [this example](https://github.com/lazywithclass/winston-cloudwatch/blob/master/examples/multiple-loggers.js).
-
-Consider that when using this feature you will have two instances of winston-cloudwatch, each with its own `setInterval` running.
-
-#### Programmatically flush logs and exit
-
-Think AWS Lambda for example, you don't want to leave the process running there for ever waiting for logs to arrive.
-
-You could have winston-cloudwatch to flush and stop the setInterval loop (thus exiting), have a look
-at [this example](https://github.com/lazywithclass/winston-cloudwatch/blob/master/examples/flush-and-exit.js).
-
-#### Custom AWS.CloudWatchLogs instance
-
-```js
-const AWS = require('aws-sdk');
-
-AWS.config.update({
-  region: 'us-east-1',
-});
-
-winston.add(new WinstonCloudWatch({
-  cloudWatchLogs: new AWS.CloudWatchLogs(),
-  logGroupName: 'testing',
-  logStreamName: 'first'
-}));
-
-```
-
-### Options
-
-This is the list of options you could pass as argument to `winston.add`:
-
- * level - defaults to `info`
- * logGroupName - `string` or `function`
- * logStreamName - `string` or `function`
- * cloudWatchLogs - `AWS.CloudWatchLogs` instance, used to set custom AWS instance. aws* and proxyServer options do not get used if this is set.
- * awsAccessKeyId
- * awsSecretKey
- * awsRegion
- * awsOptions - `object`, params as per [docs](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudWatchLogs.html#constructor-property), values in `awsOptions` are overridden by any other if specified, run [this example](https://github.com/lazywithclass/winston-cloudwatch/blob/master/examples/simple-with-aws-options.js) to have a look
- * jsonMessage - `boolean`, format the message as JSON
- * messageFormatter - `function`, format the message the way you like. This function will receive a `log` object that has the following properties: `level`, `msg`, and `meta`, which are passed by winston to the `log` function (see [CustomLogger.prototype.log as an example](https://github.com/winstonjs/winston#adding-custom-transports))
- * proxyServer - `String`, use `proxyServer` as proxy in httpOptions
- * uploadRate - `Number`, how often logs have to be sent to AWS. Be careful of not hitting [AWS CloudWatch Logs limits](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html), the default is 2000ms.
- * errorHandler - `function`, invoked with an error object, if not provided the error is sent to `console.error`
- * retentionInDays - `Number`, defaults to `0`, if set to one of the possible values `1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, and 3653` the retention policy on the log group written will be set to the value provided.
-
-AWS keys are usually picked by `aws-sdk` so you don't have to specify them, I provided the option just in case. Remember that `awsRegion` should still be set if you're using IAM roles.
-
-### Examples
-
-Please refer to [the provided examples](https://github.com/lazywithclass/winston-cloudwatch/blob/master/examples) for more hints.
-
-Note that when running the examples the process will not exit because of the [`setInterval`](https://github.com/lazywithclass/winston-cloudwatch/blob/master/index.js#L73)
-
-### Simulation
-
-You could simulate how winston-cloudwatch runs by using the files in 
-`examples/simulate`:
-
- * `running-process.js` represents a winston-cloudwatch process that sits there,
- sends a couple logs then waits for a signal to send more
- * `log.sh` is a script that you could run to send logs to the above
- 
-At this point you could for example run `log.sh` in a tight loop, like so
-
-```bash
-$ while true; do ./examples/simulate/log.sh $PID; sleep 0.2; done
-```
-
-and see what happens in the library, this might be useful to test if you need
-more streams for example, all you need to do is change `running-process.js` to
-better reflect your needs.
-
-If you want more detailed information you could do
-
-```bash
-$ WINSTON_CLOUDWATCH_DEBUG=true node examples/simulate/running-process.js
-```
-
-which will print lots of debug statements as you might've guessed.
